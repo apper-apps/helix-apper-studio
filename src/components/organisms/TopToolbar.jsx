@@ -8,6 +8,7 @@ const TopToolbar = ({
   projectName = 'Untitled Project',
   onSave,
   onPreview,
+  onResponsivePreview,
   onExport,
   onUndo,
   onRedo,
@@ -16,9 +17,14 @@ const TopToolbar = ({
   onDeviceChange,
   canUndo = false,
   canRedo = false,
+  isMobile = false,
+  isResponsivePreview = false,
+  mobileSidebarOpen = false,
+  onToggleMobileSidebar,
   className = '' 
 }) => {
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const deviceOptions = [
     { value: 'desktop', label: 'Desktop' },
@@ -32,105 +38,215 @@ const TopToolbar = ({
     onPreview?.(!isPreviewMode);
   };
 
-  return (
+  const handleResponsivePreview = () => {
+    onResponsivePreview?.(!isResponsivePreview);
+  };
+
+return (
     <div className={`h-16 bg-surface border-b border-slate-700 flex items-center justify-between px-4 ${className}`}>
       {/* Left Section - Logo & Project */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-4">
+        {/* Mobile Menu Toggle */}
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleMobileSidebar}
+            className="p-2 lg:hidden"
+          >
+            <ApperIcon name="Menu" size={20} />
+          </Button>
+        )}
+
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
             <ApperIcon name="Zap" size={18} className="text-white" />
           </div>
-          <span className="font-display font-bold text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Apper Studio
+          <span className="font-display font-bold text-lg sm:text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            {isMobile ? "Studio" : "Apper Studio"}
           </span>
         </div>
         
-        <div className="h-6 w-px bg-slate-600" />
-        
+        {!isMobile && (
+          <>
+            <div className="h-6 w-px bg-slate-600" />
+            
+            <div className="flex items-center space-x-2">
+              <ApperIcon name="File" size={16} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-300 truncate max-w-32 sm:max-w-none">
+                {projectName}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+
+{/* Center Section - Tools */}
+      {!isMobile && (
         <div className="flex items-center space-x-2">
-          <ApperIcon name="File" size={16} className="text-slate-400" />
-          <span className="text-sm font-medium text-slate-300">{projectName}</span>
-        </div>
-      </div>
-
-      {/* Center Section - Tools */}
-      <div className="flex items-center space-x-2">
-        <div className="flex items-center bg-slate-800 rounded-lg p-1">
+          <div className="flex items-center bg-slate-800 rounded-lg p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onUndo}
+              disabled={!canUndo}
+              className="px-2"
+            >
+              <ApperIcon name="Undo" size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRedo}
+              disabled={!canRedo}
+              className="px-2"
+            >
+              <ApperIcon name="Redo" size={16} />
+            </Button>
+          </div>
+          
+          <div className="h-6 w-px bg-slate-600" />
+          
           <Button
             variant="ghost"
             size="sm"
-            onClick={onUndo}
-            disabled={!canUndo}
-            className="px-2"
-          >
-            <ApperIcon name="Undo" size={16} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRedo}
-            disabled={!canRedo}
-            className="px-2"
-          >
-            <ApperIcon name="Redo" size={16} />
-          </Button>
-        </div>
-        
-        <div className="h-6 w-px bg-slate-600" />
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onOpenTemplates}
-          className="flex items-center space-x-1"
-        >
-          <ApperIcon name="Layout" size={16} />
-          <span className="hidden sm:inline">Templates</span>
-        </Button>
-      </div>
-
-      {/* Right Section - Actions */}
-      <div className="flex items-center space-x-3">
-        <Select
-          value={previewDevice}
-          onChange={(e) => onDeviceChange?.(e.target.value)}
-          options={deviceOptions}
-          className="w-32"
-        />
-        
-        <div className="flex items-center bg-slate-800 rounded-lg p-1">
-          <Button
-            variant={isPreviewMode ? "primary" : "ghost"}
-            size="sm"
-            onClick={handlePreview}
+            onClick={onOpenTemplates}
             className="flex items-center space-x-1"
           >
-            <ApperIcon name="Eye" size={16} />
-            <span className="hidden sm:inline">Preview</span>
+            <ApperIcon name="Layout" size={16} />
+            <span className="hidden sm:inline">Templates</span>
           </Button>
         </div>
-        
-        <div className="h-6 w-px bg-slate-600" />
-        
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={onSave}
-          className="flex items-center space-x-1"
-        >
-          <ApperIcon name="Save" size={16} />
-          <span className="hidden sm:inline">Save</span>
-        </Button>
-        
-        <Button
-          variant="accent"
-          size="sm"
-          onClick={onExport}
-          className="flex items-center space-x-1"
-        >
-          <ApperIcon name="Download" size={16} />
-          <span>Export</span>
-        </Button>
+      )}
+
+{/* Right Section - Actions */}
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Mobile Menu */}
+        {isMobile ? (
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2"
+            >
+              <ApperIcon name="MoreVertical" size={20} />
+            </Button>
+            
+            {showMobileMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute right-0 top-12 w-48 bg-surface border border-slate-600 rounded-lg shadow-xl z-50"
+              >
+                <div className="p-2 space-y-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onUndo}
+                    disabled={!canUndo}
+                    className="w-full justify-start"
+                  >
+                    <ApperIcon name="Undo" size={16} className="mr-2" />
+                    Undo
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onRedo}
+                    disabled={!canRedo}
+                    className="w-full justify-start"
+                  >
+                    <ApperIcon name="Redo" size={16} className="mr-2" />
+                    Redo
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onOpenTemplates}
+                    className="w-full justify-start"
+                  >
+                    <ApperIcon name="Layout" size={16} className="mr-2" />
+                    Templates
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onSave}
+                    className="w-full justify-start"
+                  >
+                    <ApperIcon name="Save" size={16} className="mr-2" />
+                    Save
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onExport}
+                    className="w-full justify-start"
+                  >
+                    <ApperIcon name="Download" size={16} className="mr-2" />
+                    Export
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center space-x-2">
+              <Select
+                value={previewDevice}
+                onChange={(e) => onDeviceChange?.(e.target.value)}
+                options={deviceOptions}
+                className="w-32"
+              />
+              
+              <Button
+                variant={isResponsivePreview ? "primary" : "ghost"}
+                size="sm"
+                onClick={handleResponsivePreview}
+                className="flex items-center space-x-1"
+                title="Responsive Preview"
+              >
+                <ApperIcon name="Smartphone" size={16} />
+              </Button>
+            </div>
+            
+            <div className="flex items-center bg-slate-800 rounded-lg p-1">
+              <Button
+                variant={isPreviewMode ? "primary" : "ghost"}
+                size="sm"
+                onClick={handlePreview}
+                className="flex items-center space-x-1"
+              >
+                <ApperIcon name="Eye" size={16} />
+                <span className="hidden sm:inline">Preview</span>
+              </Button>
+            </div>
+            
+            <div className="h-6 w-px bg-slate-600" />
+            
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onSave}
+              className="flex items-center space-x-1"
+            >
+              <ApperIcon name="Save" size={16} />
+              <span className="hidden sm:inline">Save</span>
+            </Button>
+            
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={onExport}
+              className="flex items-center space-x-1"
+            >
+              <ApperIcon name="Download" size={16} />
+              <span className="hidden lg:inline">Export</span>
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

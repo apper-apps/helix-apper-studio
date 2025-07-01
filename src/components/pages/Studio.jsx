@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { useMedia } from 'react-use';
 import ComponentSidebar from '@/components/organisms/ComponentSidebar';
 import CanvasArea from '@/components/organisms/CanvasArea';
 import PropertiesPanel from '@/components/organisms/PropertiesPanel';
@@ -7,11 +8,16 @@ import TopToolbar from '@/components/organisms/TopToolbar';
 import TemplateGallery from '@/components/organisms/TemplateGallery';
 import ExportDialog from '@/components/organisms/ExportDialog';
 import DeviceFrame from '@/components/molecules/DeviceFrame';
+import HeroSection from '@/components/organisms/HeroSection';
 import ComponentService from '@/services/api/ComponentService';
 import TemplateService from '@/services/api/TemplateService';
 import ProjectService from '@/services/api/ProjectService';
 
 const Studio = () => {
+  // Responsive detection
+  const isMobile = useMedia('(max-width: 768px)');
+  const isTablet = useMedia('(max-width: 1024px)');
+
   // Data states
   const [components, setComponents] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -20,9 +26,11 @@ const Studio = () => {
   // UI states
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isResponsivePreview, setIsResponsivePreview] = useState(false);
   const [previewDevice, setPreviewDevice] = useState('desktop');
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   
   // Project states
   const [projectName, setProjectName] = useState('Untitled Project');
@@ -32,7 +40,6 @@ const Studio = () => {
   // Loading states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
   // Load initial data
   useEffect(() => {
     loadInitialData();
@@ -43,14 +50,22 @@ const Studio = () => {
       setLoading(true);
       setError('');
       
-      const [componentsData, templatesData] = await Promise.all([
+const [componentsData, templatesData] = await Promise.all([
         ComponentService.getAll(),
         TemplateService.getAll()
       ]);
       
-      setAvailableComponents(componentsData);
-      setTemplates(templatesData);
+      // Add hero section to available components
+      const heroComponent = {
+        id: 'hero-section',
+        type: 'hero',
+        name: 'Hero Section',
+        icon: 'Play',
+        category: 'Layout'
+      };
       
+      setAvailableComponents([heroComponent, ...componentsData]);
+      setTemplates(templatesData);
       // Initialize with empty project
       const initialState = { components: [], selectedComponent: null };
       setHistory([initialState]);
@@ -179,9 +194,17 @@ const Studio = () => {
     }
   };
 
-  const handlePreview = (previewMode) => {
+const handlePreview = (previewMode) => {
     setIsPreviewMode(previewMode);
     if (previewMode) {
+      setSelectedComponent(null);
+    }
+  };
+
+  const handleResponsivePreview = (enabled) => {
+    setIsResponsivePreview(enabled);
+    if (enabled) {
+      setIsPreviewMode(true);
       setSelectedComponent(null);
     }
   };
@@ -218,13 +241,14 @@ const Studio = () => {
     );
   }
 
-  return (
+return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Top Toolbar */}
       <TopToolbar
         projectName={projectName}
         onSave={handleSave}
         onPreview={handlePreview}
+        onResponsivePreview={handleResponsivePreview}
         onExport={() => setShowExportDialog(true)}
         onUndo={undo}
         onRedo={redo}
@@ -233,47 +257,104 @@ const Studio = () => {
         onDeviceChange={setPreviewDevice}
         canUndo={historyIndex > 0}
         canRedo={historyIndex < history.length - 1}
+        isMobile={isMobile}
+        isResponsivePreview={isResponsivePreview}
+        mobileSidebarOpen={mobileSidebarOpen}
+        onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
       />
 
       {/* Main Studio Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Component Sidebar */}
-        {!isPreviewMode && (
+        {(!isPreviewMode || (isMobile && mobileSidebarOpen)) && (
           <ComponentSidebar
             components={availableComponents}
             onDragStart={() => {}}
             onDragEnd={() => {}}
+            isMobile={isMobile}
+            isOpen={mobileSidebarOpen}
+            onClose={() => setMobileSidebarOpen(false)}
           />
         )}
 
         {/* Canvas Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+<div className="flex-1 flex flex-col overflow-hidden">
           {isPreviewMode ? (
-            <DeviceFrame device={previewDevice} className="flex-1 p-4">
-              <div className="w-full h-full bg-white">
-                {/* Preview content would render here */}
-                <div className="p-8">
-                  <h1 className="text-2xl font-bold text-gray-800 mb-4">Preview Mode</h1>
-                  <p className="text-gray-600">Your app preview will appear here.</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                    {components.map((component) => (
-                      <div
-                        key={component.id}
-                        className="p-4 border rounded-lg shadow-sm"
-                        style={{
-                          backgroundColor: component.properties?.backgroundColor,
-                          color: component.properties?.textColor,
-                          borderRadius: `${component.properties?.borderRadius || 8}px`,
-                          opacity: (component.properties?.opacity || 100) / 100
-                        }}
-                      >
-                        {component.properties?.text || component.name}
+            <div className="flex-1 relative">
+              {isResponsivePreview ? (
+                <div className="p-4 bg-slate-900">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {['mobile', 'tablet', 'desktop'].map((device) => (
+                      <div key={device} className="bg-surface rounded-lg p-4">
+                        <h3 className="text-sm font-medium text-slate-300 mb-2 capitalize">
+                          {device} Preview
+                        </h3>
+                        <DeviceFrame device={device} className="h-64">
+                          <div className="w-full h-full bg-white overflow-auto">
+                            {components.find(c => c.type === 'hero') ? (
+                              <HeroSection {...components.find(c => c.type === 'hero').properties} />
+                            ) : (
+                              <div className="p-4">
+                                <h1 className="text-2xl font-bold text-gray-800 mb-4">Preview Mode</h1>
+                                <p className="text-gray-600">Your app preview will appear here.</p>
+                                <div className={`grid gap-4 mt-8 ${
+                                  device === 'mobile' ? 'grid-cols-1' : 
+                                  device === 'tablet' ? 'grid-cols-1 md:grid-cols-2' : 
+                                  'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                                }`}>
+                                  {components.filter(c => c.type !== 'hero').map((component) => (
+                                    <div
+                                      key={component.id}
+                                      className="p-4 border rounded-lg shadow-sm"
+                                      style={{
+                                        backgroundColor: component.properties?.backgroundColor,
+                                        color: component.properties?.textColor,
+                                        borderRadius: `${component.properties?.borderRadius || 8}px`,
+                                        opacity: (component.properties?.opacity || 100) / 100
+                                      }}
+                                    >
+                                      {component.properties?.text || component.name}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </DeviceFrame>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-            </DeviceFrame>
+              ) : (
+                <DeviceFrame device={previewDevice} className="flex-1 p-4">
+                  <div className="w-full h-full bg-white overflow-auto">
+                    {components.find(c => c.type === 'hero') ? (
+                      <HeroSection {...components.find(c => c.type === 'hero').properties} />
+                    ) : null}
+                    <div className="p-8">
+                      <h1 className="text-2xl font-bold text-gray-800 mb-4">Preview Mode</h1>
+                      <p className="text-gray-600">Your app preview will appear here.</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                        {components.filter(c => c.type !== 'hero').map((component) => (
+                          <div
+                            key={component.id}
+                            className="p-4 border rounded-lg shadow-sm"
+                            style={{
+                              backgroundColor: component.properties?.backgroundColor,
+                              color: component.properties?.textColor,
+                              borderRadius: `${component.properties?.borderRadius || 8}px`,
+                              opacity: (component.properties?.opacity || 100) / 100
+                            }}
+                          >
+                            {component.properties?.text || component.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </DeviceFrame>
+              )}
+            </div>
           ) : (
             <CanvasArea
               components={components}
@@ -282,15 +363,18 @@ const Studio = () => {
               onDropComponent={handleDropComponent}
               onDeleteComponent={handleDeleteComponent}
               onUpdateComponent={handleUpdateComponent}
+              isMobile={isMobile}
             />
           )}
         </div>
 
-        {/* Properties Panel */}
-        {!isPreviewMode && (
+{/* Properties Panel */}
+        {!isPreviewMode && (!isMobile || selectedComponent) && (
           <PropertiesPanel
             selectedComponent={selectedComponent}
             onUpdateComponent={handleUpdateComponent}
+            isMobile={isMobile}
+            onClose={() => setSelectedComponent(null)}
           />
         )}
       </div>

@@ -9,6 +9,8 @@ import Button from '@/components/atoms/Button';
 const PropertiesPanel = ({ 
   selectedComponent,
   onUpdateComponent,
+  isMobile = false,
+  onClose,
   className = '' 
 }) => {
   const [openGroups, setOpenGroups] = useState({
@@ -61,13 +63,20 @@ const PropertiesPanel = ({
     });
   };
 
-  if (!selectedComponent) {
+if (!selectedComponent) {
     return (
-      <div className={`w-80 bg-surface border-l border-slate-700 ${className}`}>
+      <div className={`${isMobile ? 'fixed inset-0 z-50 bg-surface' : 'w-80 bg-surface border-l border-slate-700'} ${className}`}>
         <div className="p-4 border-b border-slate-700">
-          <div className="flex items-center space-x-2">
-            <ApperIcon name="Settings" size={20} className="text-slate-400" />
-            <h2 className="font-semibold text-slate-400">Properties</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <ApperIcon name="Settings" size={20} className="text-slate-400" />
+              <h2 className="font-semibold text-slate-400">Properties</h2>
+            </div>
+            {isMobile && onClose && (
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <ApperIcon name="X" size={20} />
+              </Button>
+            )}
           </div>
         </div>
         
@@ -76,7 +85,7 @@ const PropertiesPanel = ({
             <ApperIcon name="MousePointer" size={48} className="text-slate-600 mx-auto mb-3" />
             <p className="text-slate-400 mb-2">No Component Selected</p>
             <p className="text-sm text-slate-500">
-              Click on a component in the canvas to edit its properties
+              {isMobile ? "Tap on a component in the canvas to edit its properties" : "Click on a component in the canvas to edit its properties"}
             </p>
           </div>
         </div>
@@ -84,13 +93,20 @@ const PropertiesPanel = ({
     );
   }
 
-  return (
-    <div className={`w-80 bg-surface border-l border-slate-700 flex flex-col ${className}`}>
+return (
+    <div className={`${isMobile ? 'fixed inset-0 z-50 bg-surface' : 'w-80 bg-surface border-l border-slate-700'} flex flex-col ${className}`}>
       {/* Header */}
       <div className="p-4 border-b border-slate-700">
-        <div className="flex items-center space-x-2 mb-2">
-          <ApperIcon name="Settings" size={20} className="text-primary" />
-          <h2 className="font-semibold text-slate-200">Properties</h2>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <ApperIcon name="Settings" size={20} className="text-primary" />
+            <h2 className="font-semibold text-slate-200">Properties</h2>
+          </div>
+          {isMobile && onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <ApperIcon name="X" size={20} />
+            </Button>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-6 h-6 rounded bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
@@ -100,7 +116,7 @@ const PropertiesPanel = ({
               className="text-primary"
             />
           </div>
-          <span className="text-sm font-medium text-slate-300">
+          <span className="text-sm font-medium text-slate-300 truncate">
             {selectedComponent.name}
           </span>
         </div>
@@ -266,6 +282,51 @@ const PropertiesPanel = ({
         </PropertyGroup>
 
         {/* Actions */}
+{/* Hero Section Specific Properties */}
+        {selectedComponent.type === 'hero' && (
+          <PropertyGroup
+            title="Hero Content"
+            icon="Video"
+            isOpen={openGroups.hero || true}
+            onToggle={() => toggleGroup('hero')}
+          >
+            <Input
+              label="Hero Title"
+              value={selectedComponent.properties?.title || ''}
+              onChange={(e) => handlePropertyChange('title', e.target.value)}
+              placeholder="Welcome to Your App"
+            />
+            
+            <Input
+              label="Hero Subtitle"
+              value={selectedComponent.properties?.subtitle || ''}
+              onChange={(e) => handlePropertyChange('subtitle', e.target.value)}
+              placeholder="Build amazing experiences..."
+            />
+            
+            <Input
+              label="Video URL"
+              value={selectedComponent.properties?.videoUrl || ''}
+              onChange={(e) => handlePropertyChange('videoUrl', e.target.value)}
+              placeholder="https://youtube.com/watch?v=..."
+            />
+            
+            <Input
+              label="Background Image URL"
+              value={selectedComponent.properties?.backgroundImage || ''}
+              onChange={(e) => handlePropertyChange('backgroundImage', e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+            
+            <Input
+              label="CTA Button Text"
+              value={selectedComponent.properties?.ctaText || ''}
+              onChange={(e) => handlePropertyChange('ctaText', e.target.value)}
+              placeholder="Get Started"
+            />
+          </PropertyGroup>
+        )}
+
         <div className="pt-4 border-t border-slate-700 space-y-2">
           <Button
             variant="secondary"
@@ -277,7 +338,7 @@ const PropertiesPanel = ({
             }}
           >
             <ApperIcon name="Copy" size={16} className="mr-2" />
-            Duplicate Component
+            {isMobile ? "Duplicate" : "Duplicate Component"}
           </Button>
           
           <Button
@@ -290,7 +351,7 @@ const PropertiesPanel = ({
             }}
           >
             <ApperIcon name="Trash2" size={16} className="mr-2" />
-            Delete Component
+            {isMobile ? "Delete" : "Delete Component"}
           </Button>
         </div>
       </div>
