@@ -9,7 +9,6 @@ import TemplateGallery from '@/components/organisms/TemplateGallery';
 import ExportDialog from '@/components/organisms/ExportDialog';
 import DeviceFrame from '@/components/molecules/DeviceFrame';
 import HeroSection from '@/components/organisms/HeroSection';
-import MasterLayout from '@/components/organisms/MasterLayout';
 import ComponentService from '@/services/api/ComponentService';
 import TemplateService from '@/services/api/TemplateService';
 import ProjectService from '@/services/api/ProjectService';
@@ -30,14 +29,8 @@ const Studio = () => {
   const [isResponsivePreview, setIsResponsivePreview] = useState(false);
   const [previewDevice, setPreviewDevice] = useState('desktop');
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
-const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  
-  // Panel visibility states
-  const [panelVisibility, setPanelVisibility] = useState({
-    components: true,
-    properties: true
-  });
   
   // Project states
   const [projectName, setProjectName] = useState('Untitled Project');
@@ -47,44 +40,10 @@ const [showExportDialog, setShowExportDialog] = useState(false);
   // Loading states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-// Load initial data and panel visibility settings
+  // Load initial data
   useEffect(() => {
     loadInitialData();
-    
-    // Load saved panel visibility from localStorage
-    const savedVisibility = localStorage.getItem('studio-panel-visibility');
-    if (savedVisibility) {
-      try {
-        const parsed = JSON.parse(savedVisibility);
-        setPanelVisibility(parsed);
-      } catch (error) {
-        console.error('Failed to parse saved panel visibility:', error);
-      }
-    }
   }, []);
-
-  // Save panel visibility to localStorage
-  const savePanelVisibility = (visibility) => {
-    setPanelVisibility(visibility);
-    localStorage.setItem('studio-panel-visibility', JSON.stringify(visibility));
-  };
-
-  // Panel toggle handlers
-  const handleToggleComponentsPanel = () => {
-    const newVisibility = {
-      ...panelVisibility,
-      components: !panelVisibility.components
-    };
-    savePanelVisibility(newVisibility);
-  };
-
-  const handleTogglePropertiesPanel = () => {
-    const newVisibility = {
-      ...panelVisibility,
-      properties: !panelVisibility.properties
-    };
-    savePanelVisibility(newVisibility);
-  };
 
   const loadInitialData = async () => {
     try {
@@ -288,11 +247,10 @@ const handlePreview = (previewMode) => {
     );
   }
 
-
 return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Top Toolbar */}
-      <TopToolbar
+<TopToolbar
         projectName={projectName}
         onSave={handleSave}
         onPreview={handlePreview}
@@ -310,136 +268,122 @@ return (
         isResponsivePreview={isResponsivePreview}
         mobileSidebarOpen={mobileSidebarOpen}
         onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-        // Panel visibility controls
-        showComponentsPanel={panelVisibility.components}
-        showPropertiesPanel={panelVisibility.properties}
-        onToggleComponentsPanel={handleToggleComponentsPanel}
-        onTogglePropertiesPanel={handleTogglePropertiesPanel}
       />
-{/* Main Studio Layout with Master Layout */}
-      <div className="flex-1 overflow-hidden">
-        <MasterLayout
-          leftPanel={
-            (!isPreviewMode || (isMobile && mobileSidebarOpen)) && (
-              <ComponentSidebar
-                components={availableComponents}
-                onDragStart={() => {}}
-                onDragEnd={() => {}}
-                isMobile={isMobile}
-                isOpen={mobileSidebarOpen}
-                onClose={() => setMobileSidebarOpen(false)}
-                isVisible={panelVisibility.components}
-              />
-            )
-          }
-          centerPanel={
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {isPreviewMode ? (
-                <div className="flex-1 relative">
-                  {isResponsivePreview ? (
-                    <div className="p-4 bg-slate-900">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {['mobile', 'tablet', 'desktop'].map((device) => (
-                          <div key={device} className="bg-surface rounded-lg p-4">
-                            <h3 className="text-sm font-medium text-slate-300 mb-2 capitalize">
-                              {device} Preview
-                            </h3>
-                            <DeviceFrame device={device} className="h-64">
-                              <div className="w-full h-full bg-white overflow-auto">
-                                {components.find(c => c.type === 'hero') ? (
-                                  <HeroSection {...components.find(c => c.type === 'hero').properties} />
-                                ) : (
-                                  <div className="p-4">
-                                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Preview Mode</h1>
-                                    <p className="text-gray-600">Your app preview will appear here.</p>
-                                    <div className={`grid gap-4 mt-8 ${
-                                      device === 'mobile' ? 'grid-cols-1' : 
-                                      device === 'tablet' ? 'grid-cols-1 md:grid-cols-2' : 
-                                      'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                                    }`}>
-                                      {components.filter(c => c.type !== 'hero').map((component) => (
-                                        <div
-                                          key={component.id}
-                                          className="p-4 border rounded-lg shadow-sm"
-                                          style={{
-                                            backgroundColor: component.properties?.backgroundColor,
-                                            color: component.properties?.textColor,
-                                            borderRadius: `${component.properties?.borderRadius || 8}px`,
-                                            opacity: (component.properties?.opacity || 100) / 100
-                                          }}
-                                        >
-                                          {component.properties?.text || component.name}
-                                        </div>
-                                      ))}
+
+      {/* Main Studio Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Component Sidebar */}
+        {(!isPreviewMode || (isMobile && mobileSidebarOpen)) && (
+          <ComponentSidebar
+            components={availableComponents}
+            onDragStart={() => {}}
+            onDragEnd={() => {}}
+            isMobile={isMobile}
+            isOpen={mobileSidebarOpen}
+            onClose={() => setMobileSidebarOpen(false)}
+          />
+        )}
+
+        {/* Canvas Area */}
+<div className="flex-1 flex flex-col overflow-hidden">
+          {isPreviewMode ? (
+            <div className="flex-1 relative">
+              {isResponsivePreview ? (
+                <div className="p-4 bg-slate-900">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {['mobile', 'tablet', 'desktop'].map((device) => (
+                      <div key={device} className="bg-surface rounded-lg p-4">
+                        <h3 className="text-sm font-medium text-slate-300 mb-2 capitalize">
+                          {device} Preview
+                        </h3>
+                        <DeviceFrame device={device} className="h-64">
+                          <div className="w-full h-full bg-white overflow-auto">
+                            {components.find(c => c.type === 'hero') ? (
+                              <HeroSection {...components.find(c => c.type === 'hero').properties} />
+                            ) : (
+                              <div className="p-4">
+                                <h1 className="text-2xl font-bold text-gray-800 mb-4">Preview Mode</h1>
+                                <p className="text-gray-600">Your app preview will appear here.</p>
+                                <div className={`grid gap-4 mt-8 ${
+                                  device === 'mobile' ? 'grid-cols-1' : 
+                                  device === 'tablet' ? 'grid-cols-1 md:grid-cols-2' : 
+                                  'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                                }`}>
+                                  {components.filter(c => c.type !== 'hero').map((component) => (
+                                    <div
+                                      key={component.id}
+                                      className="p-4 border rounded-lg shadow-sm"
+                                      style={{
+                                        backgroundColor: component.properties?.backgroundColor,
+                                        color: component.properties?.textColor,
+                                        borderRadius: `${component.properties?.borderRadius || 8}px`,
+                                        opacity: (component.properties?.opacity || 100) / 100
+                                      }}
+                                    >
+                                      {component.properties?.text || component.name}
                                     </div>
-                                  </div>
-                                )}
+                                  ))}
+                                </div>
                               </div>
-                            </DeviceFrame>
+                            )}
+                          </div>
+                        </DeviceFrame>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <DeviceFrame device={previewDevice} className="flex-1 p-4">
+                  <div className="w-full h-full bg-white overflow-auto">
+                    {components.find(c => c.type === 'hero') ? (
+                      <HeroSection {...components.find(c => c.type === 'hero').properties} />
+                    ) : null}
+                    <div className="p-8">
+                      <h1 className="text-2xl font-bold text-gray-800 mb-4">Preview Mode</h1>
+                      <p className="text-gray-600">Your app preview will appear here.</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                        {components.filter(c => c.type !== 'hero').map((component) => (
+                          <div
+                            key={component.id}
+                            className="p-4 border rounded-lg shadow-sm"
+                            style={{
+                              backgroundColor: component.properties?.backgroundColor,
+                              color: component.properties?.textColor,
+                              borderRadius: `${component.properties?.borderRadius || 8}px`,
+                              opacity: (component.properties?.opacity || 100) / 100
+                            }}
+                          >
+                            {component.properties?.text || component.name}
                           </div>
                         ))}
                       </div>
                     </div>
-                  ) : (
-                    <DeviceFrame device={previewDevice} className="flex-1 p-4">
-                      <div className="w-full h-full bg-white overflow-auto">
-                        {components.find(c => c.type === 'hero') ? (
-                          <HeroSection {...components.find(c => c.type === 'hero').properties} />
-                        ) : null}
-                        <div className="p-8">
-                          <h1 className="text-2xl font-bold text-gray-800 mb-4">Preview Mode</h1>
-                          <p className="text-gray-600">Your app preview will appear here.</p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                            {components.filter(c => c.type !== 'hero').map((component) => (
-                              <div
-                                key={component.id}
-                                className="p-4 border rounded-lg shadow-sm"
-                                style={{
-                                  backgroundColor: component.properties?.backgroundColor,
-                                  color: component.properties?.textColor,
-                                  borderRadius: `${component.properties?.borderRadius || 8}px`,
-                                  opacity: (component.properties?.opacity || 100) / 100
-                                }}
-                              >
-                                {component.properties?.text || component.name}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </DeviceFrame>
-                  )}
-                </div>
-              ) : (
-                <CanvasArea
-                  components={components}
-                  selectedComponent={selectedComponent}
-                  onSelectComponent={handleSelectComponent}
-                  onDropComponent={handleDropComponent}
-                  onDeleteComponent={handleDeleteComponent}
-                  onUpdateComponent={handleUpdateComponent}
-                  isMobile={isMobile}
-                />
+                  </div>
+                </DeviceFrame>
               )}
             </div>
-          }
-          rightPanel={
-            !isPreviewMode && (!isMobile || selectedComponent) && (
-              <PropertiesPanel
-                selectedComponent={selectedComponent}
-                onUpdateComponent={handleUpdateComponent}
-                isMobile={isMobile}
-                onClose={() => setSelectedComponent(null)}
-                isVisible={panelVisibility.properties}
-              />
-            )
-          }
-          leftPanelVisible={panelVisibility.components && (!isPreviewMode || (isMobile && mobileSidebarOpen))}
-          rightPanelVisible={panelVisibility.properties && !isPreviewMode && (!isMobile || selectedComponent)}
-          onToggleLeftPanel={handleToggleComponentsPanel}
-          onToggleRightPanel={handleTogglePropertiesPanel}
-          isMobile={isMobile}
-        />
+          ) : (
+            <CanvasArea
+              components={components}
+              selectedComponent={selectedComponent}
+              onSelectComponent={handleSelectComponent}
+              onDropComponent={handleDropComponent}
+              onDeleteComponent={handleDeleteComponent}
+              onUpdateComponent={handleUpdateComponent}
+              isMobile={isMobile}
+            />
+          )}
+        </div>
+
+{/* Properties Panel */}
+        {!isPreviewMode && (!isMobile || selectedComponent) && (
+          <PropertiesPanel
+            selectedComponent={selectedComponent}
+            onUpdateComponent={handleUpdateComponent}
+            isMobile={isMobile}
+            onClose={() => setSelectedComponent(null)}
+          />
+        )}
       </div>
 
       {/* Modals */}

@@ -136,243 +136,156 @@ const CanvasArea = ({
     }
   };
 
-const renderComponent = (component) => {
-    // Defensive validation
-    if (!component || typeof component !== 'object') {
-      console.warn('Invalid component data:', component);
-      return null;
+  const renderComponent = (component) => {
+    const isSelected = selectedComponent?.id === component.id;
+    const position = component.position || { x: 0, y: 0 };
+    const size = component.size || { width: isMobile ? 150 : 200, height: isMobile ? 80 : 100 };
+    
+    if (isMobile) {
+      // Mobile: Simple touch interaction without drag/resize
+      return (
+        <motion.div
+          key={component.id}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileTap={{ scale: 0.98 }}
+          className={`absolute cursor-pointer transition-all duration-200 touch-manipulation ${
+            isSelected ? 'ring-2 ring-primary ring-opacity-50' : ''
+          }`}
+          style={{
+            left: position.x,
+            top: position.y,
+            width: size.width,
+            height: size.height,
+          }}
+          onClick={() => onSelectComponent?.(component)}
+          onTouchStart={(e) => handleTouchStart(e, component)}
+        >
+          <div className={`w-full h-full rounded-lg border-2 border-dashed ${
+            isSelected ? 'border-primary bg-primary/5' : 'border-slate-600 bg-slate-800/50'
+          } flex items-center justify-center relative group`}>
+            <div className="flex flex-col items-center space-y-2">
+              <ApperIcon 
+                name={component.icon || 'Square'} 
+                size={20} 
+                className={isSelected ? 'text-primary' : 'text-slate-400'}
+              />
+              <span className={`text-xs font-medium truncate max-w-full px-1 ${
+                isSelected ? 'text-primary' : 'text-slate-400'
+              }`}>
+                {component.name}
+              </span>
+            </div>
+            
+            {isSelected && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteComponent?.(component.id);
+                }}
+                className="absolute -top-2 -right-2 w-8 h-8 bg-error rounded-full flex items-center justify-center transition-opacity"
+              >
+                <ApperIcon name="X" size={16} className="text-white" />
+              </button>
+            )}
+          </div>
+        </motion.div>
+      );
     }
 
-    try {
-      const isSelected = selectedComponent?.id === component.id;
-      
-      // Ensure position is valid object with numbers
-      const rawPosition = component.position || {};
-      const position = {
-        x: typeof rawPosition.x === 'number' && isFinite(rawPosition.x) ? rawPosition.x : 0,
-        y: typeof rawPosition.y === 'number' && isFinite(rawPosition.y) ? rawPosition.y : 0
-      };
-      
-      // Ensure size is valid object with positive numbers
-      const rawSize = component.size || {};
-      const defaultWidth = isMobile ? 150 : 200;
-      const defaultHeight = isMobile ? 80 : 100;
-      const size = {
-        width: typeof rawSize.width === 'number' && rawSize.width > 0 ? rawSize.width : defaultWidth,
-        height: typeof rawSize.height === 'number' && rawSize.height > 0 ? rawSize.height : defaultHeight
-      };
-      
-      if (isMobile) {
-        // Mobile: Simple touch interaction without drag/resize
-        return (
-          <motion.div
-            key={component.id || Math.random()}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileTap={{ scale: 0.98 }}
-            className={`absolute cursor-pointer transition-all duration-200 touch-manipulation ${
-              isSelected ? 'ring-2 ring-primary ring-opacity-50' : ''
-            }`}
-            style={{
-              left: position.x,
-              top: position.y,
-              width: size.width,
-              height: size.height,
-            }}
-            onClick={() => {
-              try {
-                onSelectComponent?.(component);
-              } catch (error) {
-                console.error('Error selecting component:', error);
-              }
-            }}
-            onTouchStart={(e) => {
-              try {
-                handleTouchStart(e, component);
-              } catch (error) {
-                console.error('Error handling touch start:', error);
-              }
+    // Desktop: Full drag and resize functionality
+    return (
+      <Draggable
+        key={component.id}
+        position={position}
+        onStop={(e, data) => handleComponentDrag(component.id, e, data)}
+        grid={snapToGrid ? [gridSize, gridSize] : [1, 1]}
+        handle=".drag-handle"
+      >
+        <div className="absolute">
+          <ResizableBox
+            width={size.width}
+            height={size.height}
+            onResizeStop={(direction, styleSize, clientSize, delta) => 
+              handleComponentResize(component.id, direction, styleSize, clientSize, delta)
+            }
+            minConstraints={[80, 60]}
+            maxConstraints={[800, 600]}
+            resizeHandles={isSelected ? ['se', 'e', 's', 'ne', 'nw', 'sw', 'w', 'n'] : []}
+            handleStyles={{
+              se: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
+              e: { width: 6, height: '100%', backgroundColor: '#6366F1', border: 'none' },
+              s: { width: '100%', height: 6, backgroundColor: '#6366F1', border: 'none' },
+              ne: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
+              nw: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
+              sw: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
+              w: { width: 6, height: '100%', backgroundColor: '#6366F1', border: 'none' },
+              n: { width: '100%', height: 6, backgroundColor: '#6366F1', border: 'none' }
             }}
           >
-            <div className={`w-full h-full rounded-lg border-2 border-dashed ${
-              isSelected ? 'border-primary bg-primary/5' : 'border-slate-600 bg-slate-800/50'
-            } flex items-center justify-center relative group`}>
-              <div className="flex flex-col items-center space-y-2">
-                <ApperIcon 
-                  name={component.icon || 'Square'} 
-                  size={20} 
-                  className={isSelected ? 'text-primary' : 'text-slate-400'}
-                />
-                <span className={`text-xs font-medium truncate max-w-full px-1 ${
-                  isSelected ? 'text-primary' : 'text-slate-400'
-                }`}>
-                  {component.name || 'Unnamed Component'}
-                </span>
-              </div>
-              
-              {isSelected && (
-                <button
-                  onClick={(e) => {
-                    try {
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.02 }}
+              className={`w-full h-full cursor-pointer transition-all duration-200 ${
+                isSelected ? 'ring-2 ring-primary ring-opacity-50' : ''
+              }`}
+              onClick={() => onSelectComponent?.(component)}
+            >
+              <div className={`w-full h-full rounded-lg border-2 border-dashed ${
+                isSelected ? 'border-primary bg-primary/5' : 'border-slate-600 bg-slate-800/50'
+              } flex items-center justify-center relative group`}>
+                {/* Drag Handle */}
+                <div className={`drag-handle absolute top-0 left-0 right-0 h-8 flex items-center justify-center cursor-move ${
+                  isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                } transition-opacity`}>
+                  <div className="flex space-x-1">
+                    <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                    <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                    <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                  </div>
+                </div>
+                
+                {/* Component Content */}
+                <div className="flex flex-col items-center space-y-2 pointer-events-none">
+                  <ApperIcon 
+                    name={component.icon || 'Square'} 
+                    size={24} 
+                    className={isSelected ? 'text-primary' : 'text-slate-400'}
+                  />
+                  <span className={`text-sm font-medium ${
+                    isSelected ? 'text-primary' : 'text-slate-400'
+                  }`}>
+                    {component.name}
+                  </span>
+                </div>
+                
+                {/* Delete Button */}
+                {isSelected && (
+                  <button
+                    onClick={(e) => {
                       e.stopPropagation();
                       onDeleteComponent?.(component.id);
-                    } catch (error) {
-                      console.error('Error deleting component:', error);
-                    }
-                  }}
-                  className="absolute -top-2 -right-2 w-8 h-8 bg-error rounded-full flex items-center justify-center transition-opacity"
-                >
-                  <ApperIcon name="X" size={16} className="text-white" />
-                </button>
-              )}
-            </div>
-          </motion.div>
-        );
-      }
-
-      // Desktop: Full drag and resize functionality with error boundaries
-      return (
-        <Draggable
-          key={component.id || Math.random()}
-          position={position}
-          onStop={(e, data) => {
-            try {
-              // Validate drag data before processing
-              if (data && typeof data.x === 'number' && typeof data.y === 'number') {
-                handleComponentDrag(component.id, e, data);
-              } else {
-                console.warn('Invalid drag data received:', data);
-              }
-            } catch (error) {
-              console.error('Error handling component drag:', error);
-            }
-          }}
-          grid={snapToGrid ? [gridSize, gridSize] : [1, 1]}
-          handle=".drag-handle"
-          bounds="parent"
-          disabled={!component.id}
-        >
-          <div className="absolute">
-            <ResizableBox
-              width={size.width}
-              height={size.height}
-              onResizeStop={(direction, styleSize, clientSize, delta) => {
-                try {
-                  // Validate resize parameters
-                  if (styleSize && typeof styleSize.width === 'number' && typeof styleSize.height === 'number') {
-                    handleComponentResize(component.id, direction, styleSize, clientSize, delta);
-                  } else {
-                    console.warn('Invalid resize data received:', { direction, styleSize, clientSize, delta });
-                  }
-                } catch (error) {
-                  console.error('Error handling component resize:', error);
-                }
-              }}
-              minConstraints={[80, 60]}
-              maxConstraints={[800, 600]}
-              resizeHandles={isSelected ? ['se', 'e', 's', 'ne', 'nw', 'sw', 'w', 'n'] : []}
-              handleStyles={{
-                se: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
-                e: { width: 6, height: '100%', backgroundColor: '#6366F1', border: 'none' },
-                s: { width: '100%', height: 6, backgroundColor: '#6366F1', border: 'none' },
-                ne: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
-                nw: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
-                sw: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
-                w: { width: 6, height: '100%', backgroundColor: '#6366F1', border: 'none' },
-                n: { width: '100%', height: 6, backgroundColor: '#6366F1', border: 'none' }
-              }}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.02 }}
-                className={`w-full h-full cursor-pointer transition-all duration-200 ${
-                  isSelected ? 'ring-2 ring-primary ring-opacity-50' : ''
-                }`}
-                onClick={() => {
-                  try {
-                    onSelectComponent?.(component);
-                  } catch (error) {
-                    console.error('Error selecting component:', error);
-                  }
-                }}
-              >
-                <div className={`w-full h-full rounded-lg border-2 border-dashed ${
-                  isSelected ? 'border-primary bg-primary/5' : 'border-slate-600 bg-slate-800/50'
-                } flex items-center justify-center relative group`}>
-                  {/* Drag Handle */}
-                  <div className={`drag-handle absolute top-0 left-0 right-0 h-8 flex items-center justify-center cursor-move ${
-                    isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                  } transition-opacity`}>
-                    <div className="flex space-x-1">
-                      <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
-                      <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
-                      <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
-                    </div>
-                  </div>
-                  
-                  {/* Component Content */}
-                  <div className="flex flex-col items-center space-y-2 pointer-events-none">
-                    <ApperIcon 
-                      name={component.icon || 'Square'} 
-                      size={24} 
-                      className={isSelected ? 'text-primary' : 'text-slate-400'}
-                    />
-                    <span className={`text-sm font-medium ${
-                      isSelected ? 'text-primary' : 'text-slate-400'
-                    }`}>
-                      {component.name || 'Unnamed Component'}
-                    </span>
-                  </div>
-                  
-                  {/* Delete Button */}
-                  {isSelected && (
-                    <button
-                      onClick={(e) => {
-                        try {
-                          e.stopPropagation();
-                          onDeleteComponent?.(component.id);
-                        } catch (error) {
-                          console.error('Error deleting component:', error);
-                        }
-                      }}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-error rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    >
-                      <ApperIcon name="X" size={12} className="text-white" />
-                    </button>
-                  )}
-                  
-                  {/* Alignment Guidelines */}
-                  {isSelected && snapToGrid && (
-                    <>
-                      <div className="absolute -left-px top-0 bottom-0 w-px bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <div className="absolute left-0 right-0 -top-px h-px bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            </ResizableBox>
-          </div>
-        </Draggable>
-      );
-    } catch (error) {
-      console.error('Error rendering component:', error, component);
-      
-      // Fallback error UI
-      return (
-        <div 
-          key={component.id || Math.random()}
-          className="absolute w-32 h-20 bg-error/20 border-2 border-error border-dashed rounded-lg flex items-center justify-center"
-          style={{ left: 0, top: 0 }}
-        >
-          <div className="text-error text-xs text-center">
-            <ApperIcon name="AlertTriangle" size={16} className="text-error mb-1" />
-            <div>Error Loading</div>
-            <div>Component</div>
-          </div>
+                    }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-error rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  >
+                    <ApperIcon name="X" size={12} className="text-white" />
+                  </button>
+                )}
+                
+                {/* Alignment Guidelines */}
+                {isSelected && snapToGrid && (
+                  <>
+                    <div className="absolute -left-px top-0 bottom-0 w-px bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="absolute left-0 right-0 -top-px h-px bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </ResizableBox>
         </div>
-      );
-    }
+      </Draggable>
+    );
   };
 
   return (

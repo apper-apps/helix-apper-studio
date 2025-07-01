@@ -8,7 +8,6 @@ const ComponentSidebar = ({
   components = [], 
   onDragStart, 
   onDragEnd,
-  isVisible = true,
   className = '' 
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,10 +27,6 @@ const ComponentSidebar = ({
     const matchesCategory = selectedCategory === 'all' || component.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-
-if (!isVisible) {
-    return null;
-  }
 
   return (
     <div className={`w-80 bg-surface border-r border-slate-700 flex flex-col ${className}`}>
