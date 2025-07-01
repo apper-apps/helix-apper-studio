@@ -1,0 +1,122 @@
+[
+  {
+    "Id": 1,
+    "type": "header",
+    "name": "Header",
+    "description": "Navigation header",
+    "icon": "Header",
+    "category": "layout"
+  },
+  {
+    "Id": 2,
+    "type": "button",
+    "name": "Button",
+    "description": "Interactive button",
+    "icon": "MousePointer",
+    "category": "form"
+  },
+  {
+    "Id": 3,
+    "type": "card",
+    "name": "Card",
+    "description": "Content card",
+    "icon": "Square",
+    "category": "display"
+  },
+  {
+    "Id": 4,
+    "type": "form",
+    "name": "Form",
+    "description": "Input form",
+    "icon": "FileText",
+    "category": "form"
+  },
+  {
+    "Id": 5,
+    "type": "text",
+    "name": "Text",
+    "description": "Text content",
+    "icon": "Type",
+    "category": "display"
+  },
+  {
+    "Id": 6,
+    "type": "image",
+    "name": "Image",
+    "description": "Image display",
+    "icon": "Image",
+    "category": "display"
+  },
+  {
+    "Id": 7,
+    "type": "sidebar",
+    "name": "Sidebar",
+    "description": "Navigation sidebar",
+    "icon": "PanelLeft",
+    "category": "layout"
+  },
+  {
+    "Id": 8,
+    "type": "table",
+    "name": "Table",
+    "description": "Data table",
+    "icon": "Table",
+    "category": "display"
+  },
+  {
+    "Id": 9,
+    "type": "chart",
+    "name": "Chart",
+    "description": "Data visualization",
+    "icon": "BarChart",
+    "category": "display"
+  },
+  {
+    "Id": 10,
+    "type": "navigation",
+    "name": "Navigation",
+    "description": "Menu navigation",
+    "icon": "Menu",
+    "category": "navigation"
+  },
+  {
+    "Id": 11,
+    "type": "footer",
+    "name": "Footer",
+    "description": "Page footer",
+    "icon": "Minus",
+    "category": "layout"
+  },
+  {
+    "Id": 12,
+    "type": "hero",
+    "name": "Hero Section",
+    "description": "Landing hero",
+    "icon": "Star",
+    "category": "layout"
+  },
+  {
+    "Id": 13,
+    "type": "list",
+    "name": "List",
+    "description": "Content list",
+    "icon": "List",
+    "category": "display"
+  },
+  {
+    "Id": 14,
+    "type": "modal",
+    "name": "Modal",
+    "description": "Popup modal",
+    "icon": "Square",
+    "category": "layout"
+  },
+  {
+    "Id": 15,
+    "type": "tabs",
+    "name": "Tabs",
+    "description": "Tab navigation",
+    "icon": "Tabs",
+    "category": "navigation"
+  }
+]

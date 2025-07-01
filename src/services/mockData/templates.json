@@ -1,0 +1,166 @@
+[
+  {
+    "Id": 1,
+    "name": "SaaS Dashboard",
+    "description": "Complete dashboard template with sidebar navigation, metrics cards, and data tables",
+    "thumbnail": "/templates/saas-dashboard.png",
+    "category": "saas",
+    "icon": "LayoutDashboard",
+    "components": [
+      {
+        "id": "header_1",
+        "type": "header",
+        "name": "Main Header",
+        "position": { "x": 0, "y": 0 },
+        "size": { "width": 800, "height": 60 },
+        "properties": { "text": "Dashboard", "backgroundColor": "#1E293B" }
+      },
+      {
+        "id": "sidebar_1",
+        "type": "sidebar",
+        "name": "Navigation",
+        "position": { "x": 0, "y": 60 },
+        "size": { "width": 200, "height": 500 },
+        "properties": { "backgroundColor": "#0F172A" }
+      },
+      {
+        "id": "card_1",
+        "type": "card",
+        "name": "Metrics Card",
+        "position": { "x": 220, "y": 80 },
+        "size": { "width": 180, "height": 120 },
+        "properties": { "text": "Total Users", "backgroundColor": "#374151" }
+      }
+    ]
+  },
+  {
+    "Id": 2,
+    "name": "Landing Page",
+    "description": "Modern landing page with hero section, features, and call-to-action",
+    "thumbnail": "/templates/landing-page.png",
+    "category": "landing",
+    "icon": "Globe",
+    "components": [
+      {
+        "id": "hero_1",
+        "type": "hero",
+        "name": "Hero Section",
+        "position": { "x": 0, "y": 0 },
+        "size": { "width": 800, "height": 400 },
+        "properties": { "text": "Build Amazing Apps", "backgroundColor": "#6366F1" }
+      },
+      {
+        "id": "button_1",
+        "type": "button",
+        "name": "CTA Button",
+        "position": { "x": 350, "y": 320 },
+        "size": { "width": 120, "height": 40 },
+        "properties": { "text": "Get Started", "backgroundColor": "#EC4899" }
+      }
+    ]
+  },
+  {
+    "Id": 3,
+    "name": "Admin Panel",
+    "description": "Administrative interface with user management, settings, and reports",
+    "thumbnail": "/templates/admin-panel.png",
+    "category": "admin",
+    "icon": "Settings",
+    "components": [
+      {
+        "id": "table_1",
+        "type": "table",
+        "name": "Users Table",
+        "position": { "x": 50, "y": 100 },
+        "size": { "width": 600, "height": 300 },
+        "properties": { "backgroundColor": "#1F2937" }
+      },
+      {
+        "id": "form_1",
+        "type": "form",
+        "name": "User Form",
+        "position": { "x": 700, "y": 100 },
+        "size": { "width": 250, "height": 300 },
+        "properties": { "backgroundColor": "#374151" }
+      }
+    ]
+  },
+  {
+    "Id": 4,
+    "name": "E-commerce Store",
+    "description": "Online store layout with product grid, shopping cart, and checkout",
+    "thumbnail": "/templates/ecommerce.png",
+    "category": "ecommerce",
+    "icon": "ShoppingCart",
+    "components": [
+      {
+        "id": "header_2",
+        "type": "header",
+        "name": "Store Header",
+        "position": { "x": 0, "y": 0 },
+        "size": { "width": 800, "height": 60 },
+        "properties": { "text": "My Store", "backgroundColor": "#059669" }
+      },
+      {
+        "id": "card_2",
+        "type": "card",
+        "name": "Product Card",
+        "position": { "x": 50, "y": 100 },
+        "size": { "width": 200, "height": 250 },
+        "properties": { "text": "Product 1", "backgroundColor": "#FFFFFF" }
+      }
+    ]
+  },
+  {
+    "Id": 5,
+    "name": "Portfolio Site",
+    "description": "Personal portfolio with project showcase and contact information",
+    "thumbnail": "/templates/portfolio.png",
+    "category": "landing",
+    "icon": "User",
+    "components": [
+      {
+        "id": "hero_2",
+        "type": "hero",
+        "name": "Portfolio Hero",
+        "position": { "x": 0, "y": 0 },
+        "size": { "width": 800, "height": 300 },
+        "properties": { "text": "John Doe - Designer", "backgroundColor": "#8B5CF6" }
+      },
+      {
+        "id": "list_1",
+        "type": "list",
+        "name": "Projects List",
+        "position": { "x": 50, "y": 350 },
+        "size": { "width": 700, "height": 200 },
+        "properties": { "backgroundColor": "#F3F4F6" }
+      }
+    ]
+  },
+  {
+    "Id": 6,
+    "name": "Analytics Dashboard",
+    "description": "Data analytics dashboard with charts, KPIs, and reporting tools",
+    "thumbnail": "/templates/analytics.png",
+    "category": "dashboard",
+    "icon": "TrendingUp",
+    "components": [
+      {
+        "id": "chart_1",
+        "type": "chart",
+        "name": "Revenue Chart",
+        "position": { "x": 50, "y": 100 },
+        "size": { "width": 350, "height": 200 },
+        "properties": { "backgroundColor": "#1F2937" }
+      },
+      {
+        "id": "chart_2",
+        "type": "chart",
+        "name": "Users Chart",
+        "position": { "x": 450, "y": 100 },
+        "size": { "width": 350, "height": 200 },
+        "properties": { "backgroundColor": "#1F2937" }
+      }
+    ]
+  }
+]

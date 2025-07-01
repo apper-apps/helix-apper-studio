@@ -1,0 +1,23 @@
+[
+  {
+    "Id": 1,
+    "name": "My First App",
+    "components": [],
+    "globalStyles": {},
+    "lastModified": "2024-01-15T10:30:00Z"
+  },
+  {
+    "Id": 2,
+    "name": "E-commerce Dashboard",
+    "components": [],
+    "globalStyles": {},
+    "lastModified": "2024-01-14T15:45:00Z"
+  },
+  {
+    "Id": 3,
+    "name": "Portfolio Website",
+    "components": [],
+    "globalStyles": {},
+    "lastModified": "2024-01-13T09:20:00Z"
+  }
+]
