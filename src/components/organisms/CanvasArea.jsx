@@ -99,33 +99,54 @@ const CanvasArea = ({
     }
   };
 
-  const handleComponentDrag = (componentId, e, data) => {
-    const alignedPosition = getAlignedPosition(data.x, data.y, componentId);
-    const component = components.find(c => c.id === componentId);
-    
-    if (component) {
-      const updatedComponent = {
-        ...component,
-        position: alignedPosition
-      };
-      onUpdateComponent?.(componentId, updatedComponent);
+const handleComponentDrag = (componentId, e, data) => {
+    try {
+      if (!componentId || !data || typeof data.x !== 'number' || typeof data.y !== 'number') {
+        console.warn('Invalid drag data:', { componentId, data });
+        return;
+      }
+
+      const alignedPosition = getAlignedPosition(data.x, data.y, componentId);
+      const component = components?.find(c => c?.id === componentId);
+      
+      if (component && alignedPosition) {
+        const updatedComponent = {
+          ...component,
+          position: alignedPosition
+        };
+        onUpdateComponent?.(componentId, updatedComponent);
+      }
+    } catch (error) {
+      console.error('Error in handleComponentDrag:', error);
     }
   };
 
   const handleComponentResize = (componentId, direction, styleSize, clientSize, delta) => {
-    const component = components.find(c => c.id === componentId);
-    
-    if (component) {
-      const newSize = snapToGrid ? {
-        width: Math.round(clientSize.width / gridSize) * gridSize,
-        height: Math.round(clientSize.height / gridSize) * gridSize
-      } : clientSize;
+    try {
+      if (!componentId || !clientSize || typeof clientSize.width !== 'number' || typeof clientSize.height !== 'number') {
+        console.warn('Invalid resize data:', { componentId, clientSize });
+        return;
+      }
+
+      const component = components?.find(c => c?.id === componentId);
       
-      const updatedComponent = {
-        ...component,
-        size: newSize
-      };
-      onUpdateComponent?.(componentId, updatedComponent);
+      if (component) {
+        const newSize = snapToGrid ? {
+          width: Math.max(80, Math.round(clientSize.width / gridSize) * gridSize),
+          height: Math.max(60, Math.round(clientSize.height / gridSize) * gridSize)
+        } : {
+          width: Math.max(80, clientSize.width),
+          height: Math.max(60, clientSize.height)
+        };
+        
+        const updatedComponent = {
+          ...component,
+          size: newSize
+        };
+        onUpdateComponent?.(componentId, updatedComponent);
+      }
+    } catch (error) {
+      console.error('Error in handleComponentResize:', error);
     }
   };
 
@@ -136,10 +157,28 @@ const CanvasArea = ({
     }
   };
 
-  const renderComponent = (component) => {
+const renderComponent = (component) => {
+    // Validate component data
+    if (!component || typeof component !== 'object' || !component.id) {
+      console.warn('Invalid component data:', component);
+      return null;
+    }
+
     const isSelected = selectedComponent?.id === component.id;
-    const position = component.position || { x: 0, y: 0 };
-    const size = component.size || { width: isMobile ? 150 : 200, height: isMobile ? 80 : 100 };
+    
+    // Ensure position has valid numeric values
+    const rawPosition = component.position || { x: 0, y: 0 };
+    const position = {
+      x: typeof rawPosition.x === 'number' && !isNaN(rawPosition.x) ? rawPosition.x : 0,
+      y: typeof rawPosition.y === 'number' && !isNaN(rawPosition.y) ? rawPosition.y : 0
+    };
+    
+    // Ensure size has valid numeric values
+    const rawSize = component.size || {};
+    const size = {
+      width: typeof rawSize.width === 'number' && rawSize.width > 0 ? rawSize.width : (isMobile ? 150 : 200),
+      height: typeof rawSize.height === 'number' && rawSize.height > 0 ? rawSize.height : (isMobile ? 80 : 100)
+    };
     
     if (isMobile) {
       // Mobile: Simple touch interaction without drag/resize
@@ -173,7 +212,7 @@ const CanvasArea = ({
               <span className={`text-xs font-medium truncate max-w-full px-1 ${
                 isSelected ? 'text-primary' : 'text-slate-400'
               }`}>
-                {component.name}
+                {component.name || 'Unnamed Component'}
               </span>
             </div>
             
@@ -193,99 +232,135 @@ const CanvasArea = ({
       );
     }
 
-    // Desktop: Full drag and resize functionality
-    return (
-      <Draggable
-        key={component.id}
-        position={position}
-        onStop={(e, data) => handleComponentDrag(component.id, e, data)}
-        grid={snapToGrid ? [gridSize, gridSize] : [1, 1]}
-        handle=".drag-handle"
-      >
-        <div className="absolute">
-          <ResizableBox
-            width={size.width}
-            height={size.height}
-            onResizeStop={(direction, styleSize, clientSize, delta) => 
-              handleComponentResize(component.id, direction, styleSize, clientSize, delta)
+    // Desktop: Full drag and resize functionality with error boundary
+    try {
+      return (
+        <Draggable
+          key={component.id}
+          position={position}
+          onStop={(e, data) => {
+            try {
+              if (data && typeof data.x === 'number' && typeof data.y === 'number') {
+                handleComponentDrag(component.id, e, data);
+              }
+            } catch (error) {
+              console.error('Error in drag handler:', error);
             }
-            minConstraints={[80, 60]}
-            maxConstraints={[800, 600]}
-            resizeHandles={isSelected ? ['se', 'e', 's', 'ne', 'nw', 'sw', 'w', 'n'] : []}
-            handleStyles={{
-              se: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
-              e: { width: 6, height: '100%', backgroundColor: '#6366F1', border: 'none' },
-              s: { width: '100%', height: 6, backgroundColor: '#6366F1', border: 'none' },
-              ne: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
-              nw: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
-              sw: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
-              w: { width: 6, height: '100%', backgroundColor: '#6366F1', border: 'none' },
-              n: { width: '100%', height: 6, backgroundColor: '#6366F1', border: 'none' }
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.02 }}
-              className={`w-full h-full cursor-pointer transition-all duration-200 ${
-                isSelected ? 'ring-2 ring-primary ring-opacity-50' : ''
-              }`}
-              onClick={() => onSelectComponent?.(component)}
+          }}
+          grid={snapToGrid ? [gridSize, gridSize] : [1, 1]}
+          handle=".drag-handle"
+          defaultPosition={position}
+        >
+          <div className="absolute">
+            <ResizableBox
+              width={size.width}
+              height={size.height}
+              onResizeStop={(direction, styleSize, clientSize, delta) => {
+                try {
+                  if (clientSize && typeof clientSize.width === 'number' && typeof clientSize.height === 'number') {
+                    handleComponentResize(component.id, direction, styleSize, clientSize, delta);
+                  }
+                } catch (error) {
+                  console.error('Error in resize handler:', error);
+                }
+              }}
+              minConstraints={[80, 60]}
+              maxConstraints={[800, 600]}
+              resizeHandles={isSelected ? ['se', 'e', 's', 'ne', 'nw', 'sw', 'w', 'n'] : []}
+              handleStyles={{
+                se: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
+                e: { width: 6, height: '100%', backgroundColor: '#6366F1', border: 'none' },
+                s: { width: '100%', height: 6, backgroundColor: '#6366F1', border: 'none' },
+                ne: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
+                nw: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
+                sw: { width: 10, height: 10, backgroundColor: '#6366F1', border: 'none', borderRadius: '50%' },
+                w: { width: 6, height: '100%', backgroundColor: '#6366F1', border: 'none' },
+                n: { width: '100%', height: 6, backgroundColor: '#6366F1', border: 'none' }
+              }}
             >
-              <div className={`w-full h-full rounded-lg border-2 border-dashed ${
-                isSelected ? 'border-primary bg-primary/5' : 'border-slate-600 bg-slate-800/50'
-              } flex items-center justify-center relative group`}>
-                {/* Drag Handle */}
-                <div className={`drag-handle absolute top-0 left-0 right-0 h-8 flex items-center justify-center cursor-move ${
-                  isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                } transition-opacity`}>
-                  <div className="flex space-x-1">
-                    <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
-                    <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
-                    <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.02 }}
+                className={`w-full h-full cursor-pointer transition-all duration-200 ${
+                  isSelected ? 'ring-2 ring-primary ring-opacity-50' : ''
+                }`}
+                onClick={() => onSelectComponent?.(component)}
+              >
+                <div className={`w-full h-full rounded-lg border-2 border-dashed ${
+                  isSelected ? 'border-primary bg-primary/5' : 'border-slate-600 bg-slate-800/50'
+                } flex items-center justify-center relative group`}>
+                  {/* Drag Handle */}
+                  <div className={`drag-handle absolute top-0 left-0 right-0 h-8 flex items-center justify-center cursor-move ${
+                    isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  } transition-opacity`}>
+                    <div className="flex space-x-1">
+                      <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                      <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                      <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                    </div>
                   </div>
+                  
+                  {/* Component Content */}
+                  <div className="flex flex-col items-center space-y-2 pointer-events-none">
+                    <ApperIcon 
+                      name={component.icon || 'Square'} 
+                      size={24} 
+                      className={isSelected ? 'text-primary' : 'text-slate-400'}
+                    />
+                    <span className={`text-sm font-medium ${
+                      isSelected ? 'text-primary' : 'text-slate-400'
+                    }`}>
+                      {component.name || 'Unnamed Component'}
+                    </span>
+                  </div>
+                  
+                  {/* Delete Button */}
+                  {isSelected && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteComponent?.(component.id);
+                      }}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-error rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      <ApperIcon name="X" size={12} className="text-white" />
+                    </button>
+                  )}
+                  
+                  {/* Alignment Guidelines */}
+                  {isSelected && snapToGrid && (
+                    <>
+                      <div className="absolute -left-px top-0 bottom-0 w-px bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="absolute left-0 right-0 -top-px h-px bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </>
+                  )}
                 </div>
-                
-                {/* Component Content */}
-                <div className="flex flex-col items-center space-y-2 pointer-events-none">
-                  <ApperIcon 
-                    name={component.icon || 'Square'} 
-                    size={24} 
-                    className={isSelected ? 'text-primary' : 'text-slate-400'}
-                  />
-                  <span className={`text-sm font-medium ${
-                    isSelected ? 'text-primary' : 'text-slate-400'
-                  }`}>
-                    {component.name}
-                  </span>
-                </div>
-                
-                {/* Delete Button */}
-                {isSelected && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteComponent?.(component.id);
-                    }}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-error rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  >
-                    <ApperIcon name="X" size={12} className="text-white" />
-                  </button>
-                )}
-                
-                {/* Alignment Guidelines */}
-                {isSelected && snapToGrid && (
-                  <>
-                    <div className="absolute -left-px top-0 bottom-0 w-px bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="absolute left-0 right-0 -top-px h-px bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          </ResizableBox>
+              </motion.div>
+            </ResizableBox>
+          </div>
+        </Draggable>
+      );
+    } catch (error) {
+      console.error('Error rendering draggable component:', error, component);
+      // Fallback to static component if Draggable fails
+      return (
+        <div 
+          key={component.id}
+          className="absolute cursor-pointer bg-red-100 border-2 border-red-500 rounded p-2"
+          style={{
+            left: position.x,
+            top: position.y,
+            width: size.width,
+            height: size.height,
+          }}
+          onClick={() => onSelectComponent?.(component)}
+        >
+          <div className="text-red-600 text-xs">Component Error</div>
+          <div className="text-red-500 text-xs">{component.name || 'Unknown'}</div>
         </div>
-      </Draggable>
-    );
+      );
+    }
   };
 
   return (
@@ -401,7 +476,7 @@ const CanvasArea = ({
         )}
 
         {/* Render Components */}
-        {components.map(renderComponent)}
+{components?.filter(component => component && component.id).map(renderComponent)}
 
         {/* Grid Overlay (for visual reference when not using background grid) */}
         {showGrid && snapToGrid && !isMobile && (
