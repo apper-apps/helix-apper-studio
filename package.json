@@ -20,10 +20,11 @@
     "react-dom": "^18.2.0",
     "react-draggable": "^4.4.6",
     "react-dropzone": "^14.2.3",
-"react-player": "^2.14.1",
+    "react-player": "^2.14.1",
     "react-redux": "^9.2.0",
     "react-resizable-box": "^2.1.0",
     "react-router-dom": "^6.22.0",
+    "react-split-pane": "^0.1.92",
     "react-toastify": "^11.0.5",
     "react-use": "^17.5.0"
   },

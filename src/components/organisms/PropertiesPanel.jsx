@@ -11,6 +11,7 @@ const PropertiesPanel = ({
   onUpdateComponent,
   isMobile = false,
   onClose,
+  isVisible = true,
   className = '' 
 }) => {
   const [openGroups, setOpenGroups] = useState({
@@ -63,7 +64,11 @@ const PropertiesPanel = ({
     });
   };
 
-if (!selectedComponent) {
+if (!isVisible) {
+    return null;
+  }
+
+  if (!selectedComponent) {
     return (
       <div className={`${isMobile ? 'fixed inset-0 z-50 bg-surface' : 'w-80 bg-surface border-l border-slate-700'} ${className}`}>
         <div className="p-4 border-b border-slate-700">
