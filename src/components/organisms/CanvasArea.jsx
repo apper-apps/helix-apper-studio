@@ -101,20 +101,51 @@ const CanvasArea = ({
 
 const handleComponentDrag = (componentId, e, data) => {
     try {
-      if (!componentId || !data || typeof data.x !== 'number' || typeof data.y !== 'number') {
+      // Enhanced validation for drag parameters
+      if (!componentId || 
+          typeof componentId !== 'string' ||
+          !data || 
+          typeof data !== 'object' ||
+          typeof data.x !== 'number' || 
+          typeof data.y !== 'number' ||
+          isNaN(data.x) ||
+          isNaN(data.y) ||
+          !isFinite(data.x) ||
+          !isFinite(data.y)) {
         console.warn('Invalid drag data:', { componentId, data });
         return;
       }
 
+      // Validate components array exists
+      if (!Array.isArray(components)) {
+        console.warn('Components array is invalid:', components);
+        return;
+      }
+
       const alignedPosition = getAlignedPosition(data.x, data.y, componentId);
-      const component = components?.find(c => c?.id === componentId);
+      const component = components.find(c => c && typeof c === 'object' && c.id === componentId);
       
-      if (component && alignedPosition) {
+      if (component && alignedPosition && typeof alignedPosition === 'object') {
+        // Validate aligned position
+        if (typeof alignedPosition.x !== 'number' || 
+            typeof alignedPosition.y !== 'number' ||
+            isNaN(alignedPosition.x) ||
+            isNaN(alignedPosition.y)) {
+          console.warn('Invalid aligned position:', alignedPosition);
+          return;
+        }
+
         const updatedComponent = {
           ...component,
-          position: alignedPosition
+          position: {
+            x: alignedPosition.x,
+            y: alignedPosition.y
+          }
         };
-        onUpdateComponent?.(componentId, updatedComponent);
+        
+        if (typeof onUpdateComponent === 'function') {
+          onUpdateComponent(componentId, updatedComponent);
+        }
       }
     } catch (error) {
       console.error('Error in handleComponentDrag:', error);
@@ -158,26 +189,36 @@ const handleComponentDrag = (componentId, e, data) => {
   };
 
 const renderComponent = (component) => {
-    // Validate component data
-    if (!component || typeof component !== 'object' || !component.id) {
+    // Enhanced validation for component data
+    if (!component || 
+        typeof component !== 'object' || 
+        !component.id || 
+        typeof component.id !== 'string' ||
+        component.id.trim() === '') {
       console.warn('Invalid component data:', component);
+      return null;
+    }
+
+    // Validate component type
+    if (!component.type || typeof component.type !== 'string') {
+      console.warn('Component missing valid type:', component);
       return null;
     }
 
     const isSelected = selectedComponent?.id === component.id;
     
-    // Ensure position has valid numeric values
+    // Ensure position has valid numeric values with comprehensive validation
     const rawPosition = component.position || { x: 0, y: 0 };
     const position = {
-      x: typeof rawPosition.x === 'number' && !isNaN(rawPosition.x) ? rawPosition.x : 0,
-      y: typeof rawPosition.y === 'number' && !isNaN(rawPosition.y) ? rawPosition.y : 0
+      x: (typeof rawPosition.x === 'number' && !isNaN(rawPosition.x) && isFinite(rawPosition.x)) ? rawPosition.x : 0,
+      y: (typeof rawPosition.y === 'number' && !isNaN(rawPosition.y) && isFinite(rawPosition.y)) ? rawPosition.y : 0
     };
     
-    // Ensure size has valid numeric values
+    // Ensure size has valid numeric values with comprehensive validation
     const rawSize = component.size || {};
     const size = {
-      width: typeof rawSize.width === 'number' && rawSize.width > 0 ? rawSize.width : (isMobile ? 150 : 200),
-      height: typeof rawSize.height === 'number' && rawSize.height > 0 ? rawSize.height : (isMobile ? 80 : 100)
+      width: (typeof rawSize.width === 'number' && rawSize.width > 0 && isFinite(rawSize.width)) ? rawSize.width : (isMobile ? 150 : 200),
+      height: (typeof rawSize.height === 'number' && rawSize.height > 0 && isFinite(rawSize.height)) ? rawSize.height : (isMobile ? 150 : 200)
     };
     
     if (isMobile) {
@@ -235,21 +276,43 @@ const renderComponent = (component) => {
     // Desktop: Full drag and resize functionality with error boundary
     try {
       return (
-        <Draggable
-          key={component.id}
+<Draggable
+          key={`draggable-${component.id}`}
           position={position}
           onStop={(e, data) => {
             try {
-              if (data && typeof data.x === 'number' && typeof data.y === 'number') {
+              if (data && 
+                  typeof data.x === 'number' && 
+                  typeof data.y === 'number' &&
+                  !isNaN(data.x) && 
+                  !isNaN(data.y) &&
+                  isFinite(data.x) &&
+                  isFinite(data.y)) {
                 handleComponentDrag(component.id, e, data);
+              } else {
+                console.warn('Invalid drag data received:', data);
               }
             } catch (error) {
               console.error('Error in drag handler:', error);
             }
           }}
-          grid={snapToGrid ? [gridSize, gridSize] : [1, 1]}
+          onStart={(e, data) => {
+            try {
+              // Validate drag start data
+              if (!data || typeof data.x !== 'number' || typeof data.y !== 'number') {
+                console.warn('Invalid drag start data:', data);
+                return false; // Prevent drag
+              }
+            } catch (error) {
+              console.error('Error in drag start handler:', error);
+              return false; // Prevent drag
+            }
+          }}
+          grid={snapToGrid ? [Math.max(1, gridSize), Math.max(1, gridSize)] : [1, 1]}
           handle=".drag-handle"
           defaultPosition={position}
+          bounds="parent"
+          disabled={!component.id || typeof component.id !== 'string'}
         >
           <div className="absolute">
             <ResizableBox
