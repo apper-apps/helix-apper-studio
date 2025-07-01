@@ -176,7 +176,7 @@ const [componentsData, templatesData] = await Promise.all([
     setProjectName(template.name !== 'Blank Template' ? template.name : 'Untitled Project');
   };
 
-  // Project actions
+// Project actions
   const handleSave = async () => {
     try {
       const projectData = {
@@ -192,6 +192,12 @@ const [componentsData, templatesData] = await Promise.all([
       toast.error('Failed to save project');
       console.error('Save error:', error);
     }
+  };
+
+  const handleFileUpload = (fileData) => {
+    console.log('File uploaded:', fileData);
+    // File handling logic would go here
+    // Could store in project assets, create image components, etc.
   };
 
 const handlePreview = (previewMode) => {
@@ -244,7 +250,7 @@ const handlePreview = (previewMode) => {
 return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Top Toolbar */}
-      <TopToolbar
+<TopToolbar
         projectName={projectName}
         onSave={handleSave}
         onPreview={handlePreview}
@@ -253,6 +259,7 @@ return (
         onUndo={undo}
         onRedo={redo}
         onOpenTemplates={() => setShowTemplateGallery(true)}
+        onFileUpload={handleFileUpload}
         previewDevice={previewDevice}
         onDeviceChange={setPreviewDevice}
         canUndo={historyIndex > 0}
