@@ -1,9 +1,11 @@
-import { useState, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import Draggable from 'react-draggable';
-import { ResizableBox } from 'react-resizable-box';
-import ApperIcon from '@/components/ApperIcon';
-import Button from '@/components/atoms/Button';
+import React, { useCallback, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import Draggable from "react-draggable";
+import { ResizableBox } from "react-resizable-box";
+import App from "@/App";
+import ApperIcon from "@/components/ApperIcon";
+import Button from "@/components/atoms/Button";
+import Error from "@/components/ui/Error";
 
 const CanvasArea = ({ 
   components = [], 
@@ -273,12 +275,29 @@ const renderComponent = (component) => {
       );
     }
 
-    // Desktop: Full drag and resize functionality with error boundary
+// Desktop: Full drag and resize functionality with error boundary
     try {
+      // Validate component data before rendering
+      if (!component || !component.id) {
+        console.warn('Invalid component data, skipping render:', component);
+        return null;
+      }
+
+      // Ensure position and size have valid fallbacks
+      const safePosition = {
+        x: (position && typeof position.x === 'number' && isFinite(position.x)) ? position.x : 0,
+        y: (position && typeof position.y === 'number' && isFinite(position.y)) ? position.y : 0
+      };
+
+      const safeSize = {
+        width: (size && typeof size.width === 'number' && size.width > 0) ? size.width : 120,
+        height: (size && typeof size.height === 'number' && size.height > 0) ? size.height : 80
+      };
+
       return (
-<Draggable
-          key={`draggable-${component.id}`}
-          position={position}
+        <Draggable
+          key={`draggable-${component.id}-${component.name || 'unnamed'}`}
+          position={safePosition}
           onStop={(e, data) => {
             try {
               if (data && 
@@ -303,25 +322,43 @@ const renderComponent = (component) => {
                 console.warn('Invalid drag start data:', data);
                 return false; // Prevent drag
               }
+              return true;
             } catch (error) {
               console.error('Error in drag start handler:', error);
               return false; // Prevent drag
             }
           }}
-          grid={snapToGrid ? [Math.max(1, gridSize), Math.max(1, gridSize)] : [1, 1]}
+          onDrag={(e, data) => {
+            try {
+              // Optional: Add drag validation during drag
+              if (!data || typeof data.x !== 'number' || typeof data.y !== 'number') {
+                return false;
+              }
+            } catch (error) {
+              console.error('Error during drag:', error);
+              return false;
+            }
+          }}
+          grid={snapToGrid ? [Math.max(1, gridSize || 10), Math.max(1, gridSize || 10)] : [1, 1]}
           handle=".drag-handle"
-          defaultPosition={position}
+          defaultPosition={safePosition}
           bounds="parent"
           disabled={!component.id || typeof component.id !== 'string'}
         >
-          <div className="absolute">
+          <div className="absolute" style={{ position: 'relative' }}>
             <ResizableBox
-              width={size.width}
-              height={size.height}
+              width={safeSize.width}
+              height={safeSize.height}
               onResizeStop={(direction, styleSize, clientSize, delta) => {
                 try {
-                  if (clientSize && typeof clientSize.width === 'number' && typeof clientSize.height === 'number') {
+                  if (clientSize && 
+                      typeof clientSize.width === 'number' && 
+                      typeof clientSize.height === 'number' &&
+                      clientSize.width > 0 && 
+                      clientSize.height > 0) {
                     handleComponentResize(component.id, direction, styleSize, clientSize, delta);
+                  } else {
+                    console.warn('Invalid resize data:', { direction, styleSize, clientSize, delta });
                   }
                 } catch (error) {
                   console.error('Error in resize handler:', error);
@@ -348,7 +385,13 @@ const renderComponent = (component) => {
                 className={`w-full h-full cursor-pointer transition-all duration-200 ${
                   isSelected ? 'ring-2 ring-primary ring-opacity-50' : ''
                 }`}
-                onClick={() => onSelectComponent?.(component)}
+                onClick={() => {
+                  try {
+                    onSelectComponent?.(component);
+                  } catch (error) {
+                    console.error('Error selecting component:', error);
+                  }
+                }}
               >
                 <div className={`w-full h-full rounded-lg border-2 border-dashed ${
                   isSelected ? 'border-primary bg-primary/5' : 'border-slate-600 bg-slate-800/50'
@@ -356,7 +399,7 @@ const renderComponent = (component) => {
                   {/* Drag Handle */}
                   <div className={`drag-handle absolute top-0 left-0 right-0 h-8 flex items-center justify-center cursor-move ${
                     isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                  } transition-opacity`}>
+                  } transition-opacity z-20`}>
                     <div className="flex space-x-1">
                       <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
                       <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
@@ -382,10 +425,14 @@ const renderComponent = (component) => {
                   {isSelected && (
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteComponent?.(component.id);
+                        try {
+                          e.stopPropagation();
+                          onDeleteComponent?.(component.id);
+                        } catch (error) {
+                          console.error('Error deleting component:', error);
+                        }
                       }}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-error rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-error rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30"
                     >
                       <ApperIcon name="X" size={12} className="text-white" />
                     </button>
