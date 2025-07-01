@@ -1,10 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useDropzone } from 'react-dropzone';
-import { toast } from 'react-toastify';
 import ApperIcon from '@/components/ApperIcon';
 import Button from '@/components/atoms/Button';
 import Select from '@/components/atoms/Select';
+
 const TopToolbar = ({ 
   projectName = 'Untitled Project',
   onSave,
@@ -14,7 +13,6 @@ const TopToolbar = ({
   onUndo,
   onRedo,
   onOpenTemplates,
-  onFileUpload,
   previewDevice = 'desktop',
   onDeviceChange,
   canUndo = false,
@@ -27,7 +25,6 @@ const TopToolbar = ({
 }) => {
 const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const fileInputRef = useRef(null);
 
   const deviceOptions = [
     { value: 'desktop', label: 'Desktop' },
@@ -35,20 +32,6 @@ const [isPreviewMode, setIsPreviewMode] = useState(false);
     { value: 'tablet', label: 'Tablet' },
     { value: 'mobile', label: 'Mobile' }
   ];
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.svg'],
-      'application/json': ['.json'],
-      'text/html': ['.html'],
-      'text/css': ['.css']
-    },
-    multiple: true,
-    onDrop: (acceptedFiles) => {
-      handleFileUpload(acceptedFiles);
-    },
-    noClick: true
-  });
 
   const handlePreview = () => {
     setIsPreviewMode(!isPreviewMode);
@@ -59,29 +42,6 @@ const [isPreviewMode, setIsPreviewMode] = useState(false);
     onResponsivePreview?.(!isResponsivePreview);
   };
 
-  const handleFileUpload = (files) => {
-    if (files.length > 0) {
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const fileData = {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            data: e.target.result,
-            lastModified: file.lastModified
-          };
-          onFileUpload?.(fileData);
-          toast.success(`${file.name} uploaded successfully`);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  };
-
-  const handleFileButtonClick = () => {
-    fileInputRef.current?.click();
-  };
 return (
     <div className={`h-16 bg-surface border-b border-slate-700 flex items-center justify-between px-4 ${className}`}>
       {/* Left Section - Logo & Project */}
@@ -160,28 +120,7 @@ return (
       )}
 
 {/* Right Section - Actions */}
-      <div 
-        {...getRootProps()}
-        className={`flex items-center space-x-2 sm:space-x-3 ${
-          isDragActive ? 'bg-primary/10 rounded-lg p-2 border border-primary border-dashed' : ''
-        }`}
-      >
-        <input {...getInputProps()} />
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept="image/*,.json,.html,.css"
-          onChange={(e) => handleFileUpload(Array.from(e.target.files))}
-          className="hidden"
-        />
-        
-        {isDragActive && (
-          <div className="absolute inset-0 flex items-center justify-center bg-primary/20 rounded-lg pointer-events-none">
-            <span className="text-primary font-medium">Drop files here</span>
-          </div>
-        )}
-        
+      <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Mobile Menu */}
         {isMobile ? (
           <div className="relative">
@@ -229,15 +168,6 @@ return (
                   >
                     <ApperIcon name="Layout" size={16} className="mr-2" />
                     Templates
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleFileButtonClick}
-                    className="w-full justify-start"
-                  >
-                    <ApperIcon name="Upload" size={16} className="mr-2" />
-                    Upload Files
                   </Button>
                   <Button
                     variant="ghost"
@@ -294,18 +224,7 @@ return (
               </Button>
             </div>
             
-<div className="h-6 w-px bg-slate-600" />
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleFileButtonClick}
-              className="flex items-center space-x-1"
-              title="Upload Files"
-            >
-              <ApperIcon name="Upload" size={16} />
-              <span className="hidden sm:inline">Upload</span>
-            </Button>
+            <div className="h-6 w-px bg-slate-600" />
             
             <Button
               variant="secondary"
